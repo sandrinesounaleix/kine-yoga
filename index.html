@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1b1530">
+<title>Programme kiné — Sandrine</title>
+<style>
+  :root {
+    --bg: #16121f;
+    --bg-card: #201a33;
+    --bg-soft: #271f3d;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.15);
+    --text: #f1edf9;
+    --text-secondary: #b3a9cc;
+    --text-tertiary: #8077a0;
+    --accent: #e0976b;
+    --accent-bg: rgba(224,151,107,0.14);
+    --warn-bg: rgba(224,151,107,0.10);
+    --warn-text: #e0976b;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    padding: env(safe-area-inset-top) 14px calc(env(safe-area-inset-bottom) + 24px) 14px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    margin: 16px 0 2px;
+    color: var(--text);
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin: 0 0 16px;
+  }
+  .weekgrid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .weekpill {
+    border: none;
+    cursor: pointer;
+    padding: 10px 4px;
+    border-radius: 10px;
+    background: var(--bg-soft);
+    color: var(--text-secondary);
+    text-align: center;
+    min-height: 48px;
+    font-family: inherit;
+  }
+  .weekpill.active {
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+  .weekpill .wk { font-size: 13px; font-weight: 600; }
+  .weekpill .pct { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+
+  .weekhead {
+    margin-bottom: 14px;
+  }
+  .weekhead-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .weekhead-title { font-size: 15.5px; font-weight: 600; margin: 0 0 2px; }
+  .weekhead-focus { font-size: 12.5px; color: var(--text-secondary); margin: 0; line-height: 1.4; }
+  .weekhead-pct { font-size: 22px; font-weight: 600; white-space: nowrap; color: var(--accent); }
+  .progressbar {
+    height: 6px;
+    background: var(--bg-soft);
+    border-radius: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .progressbar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.2s;
+  }
+
+  .watchbox {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--warn-bg);
+    border-radius: 10px;
+    margin-bottom: 14px;
+    border: 0.5px solid var(--border);
+  }
+  .watchbox-icon { flex-shrink: 0; margin-top: 1px; color: var(--warn-text); font-size: 15px; }
+  .watchbox p { font-size: 12.5px; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin: 0 0 10px;
+    text-align: center;
+  }
+
+  .daycard {
+    background: var(--bg-card);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .daylabel {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  .sectionlabel {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin: 12px 0 0;
+  }
+
+  .item {
+    padding: 10px 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .item:last-child { border-bottom: none; }
+  .item-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .item input[type="checkbox"] {
+    margin-top: 3px;
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+    accent-color: var(--accent);
+  }
+  .item-body { flex: 1; min-width: 0; }
+  .item-toggle {
+    all: unset;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    cursor: pointer;
+    min-height: 24px;
+    font-family: inherit;
+  }
+  .item-label {
+    font-size: 14.5px;
+    line-height: 1.4;
+    color: var(--text);
+  }
+  .item-label.done {
+    color: var(--text-tertiary);
+    text-decoration: line-through;
+  }
+  .item-chevron {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    transition: transform 0.15s;
+  }
+  .item-chevron.open { transform: rotate(180deg); }
+  .item-freq {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+  .item-detail {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    padding: 10px;
+    background: var(--bg-soft);
+    border-radius: 8px;
+  }
+  .vidlinks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .vidlink {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: none;
+    background: var(--accent-bg);
+    padding: 9px 10px;
+    border-radius: 8px;
+    min-height: 38px;
+  }
+  .vidlink svg { flex-shrink: 0; width: 13px; height: 13px; }
+
+  footer {
+    text-align: center;
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    margin-top: 20px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<h1>Programme kiné — 4 semaines</h1>
+<p class="subtitle">Tibial postérieur, fascia, mobilité — Antoine Balay</p>
+
+<div id="app"></div>
+
+<footer>Exercices donnés à titre informatif. En cas de douleur vive ou inhabituelle, arrête et contacte ton kiné.</footer>
+
+<script>
+const VID = {
+  resp1: "https://www.youtube.com/watch?v=PuITHS7qUD4",
+  resp2: "https://www.youtube.com/watch?v=FgR4O2JMD7k",
+  nombril1: "https://www.youtube.com/watch?v=KFkmpKWf9PQ",
+  nombril2: "https://www.youtube.com/watch?v=HNggaYQxHWk",
+  babinski: "https://www.youtube.com/watch?v=qfLSJ6vvMys",
+  carsCheville: "https://www.youtube.com/watch?v=vIDJiMShg4o",
+  carsHanche: "https://www.youtube.com/watch?v=NNMW_h-fzLg",
+  carsComplet: "https://www.youtube.com/watch?v=aZHHt0D0PTw",
+  bearSquat: "https://www.youtube.com/watch?v=4WD7WKi9EWM",
+  machoire: "https://drive.google.com/file/d/1Ma_asRp6LYINgT9HenuDALAWjG79CwyZ/view?usp=drive_link",
+  yinIschio: "https://www.youtube.com/watch?v=MtMv-Z2Vk2E",
+  yinHanches: "https://www.youtube.com/watch?v=7jdr5NVnYrM"
+};
+
+const EX = {
+  resp: { label: "Respiration diaphragmatique", how: "Allongée, une main sur le ventre. Inspire 4 secondes par le nez : seul le ventre se gonfle (pas la poitrine). Souffle 6 secondes par la bouche, comme dans une paille : le ventre redescend. 6 à 8 cycles.", vids: [["Respiration guidée", VID.resp1], ["Thorax & diaphragme", VID.resp2]] },
+  nombril: { label: "Radiation du nombril", how: "Reconnecte ton centre et prolonge le travail viscéral sur ta cicatrice. Allongée sur le dos, 5 minutes avant de te lever.", vids: [["Version douce", VID.nombril1], ["Version complète", VID.nombril2]] },
+  griffes: { label: "Griffes des orteils", how: "Pied à plat au sol. Griffe le sol avec tes orteils, comme pour attraper une serviette, puis relâche. 10 à 15 fois par pied." },
+  tibial1: { label: "Tibial postérieur (renfo)", how: "Assise, genou plié, pied posé au sol. Pousse la plante du pied vers l'intérieur (comme si tu voulais tourner la semelle vers l'autre pied), en t'aidant des orteils qui griffent, contre une résistance (le pied de la table, un mur, ou ta main). Tiens 5 secondes, tu vas sentir ça cramper sous le pied : normal. Relâche. 8 à 10 fois. Surtout le pied gauche, mais fais les deux." },
+  tibial2: { label: "Le ballon entre les orteils", how: "Assise, les deux genoux pliés, un petit ballon (ou une balle) calé contre l'avant des deux pieds. Serre le ballon avec l'avant des pieds et les orteils, en engageant l'intérieur du pied. Tiens quelques secondes, relâche. 8 à 10 fois." },
+  fibulaires: { label: "Les fibulaires (équilibre)", how: "Pour équilibrer, le mouvement opposé (plus facile pour toi). Genou plié, pousse cette fois le pied vers l'extérieur contre une résistance, sans laisser le genou rentrer. Tiens 5 secondes, relâche. 8 à 10 fois." },
+  babinski: { label: "Réflexe du pied (Babinski)", how: "Tu te souviens : au squat, ton gros orteil remonte au lieu de pousser. On le rééduque. Assise ou debout, appuie le gros orteil vers le bas dans le sol (pas vers le haut). Tiens 5 secondes, relâche. 10 fois par pied. Marche aussi pieds nus chez toi en cherchant à sentir le gros orteil pousser dans le sol.", vids: [["Intégration du réflexe (IMP)", VID.babinski]] },
+  reveils: { label: "3 réveils actifs du tendon", how: "1. Allongée : monte et descends lentement les pieds (flexion/extension) x15. 2. Mains au mur : monte sur la demi-pointe très lentement, puis redescends lentement x10. 3. Assise jambe tendue : attrape l'avant du pied, tire doucement, genou un peu fléchi, 30 secondes." },
+  orteilBloc: { label: "Poussée du gros orteil sur un bloc", how: "Place le gros orteil et l'avant du pied sur le rebord d'un bloc de yoga (ou une marche), le talon dans le vide. Tiens-toi à un mur ou un meuble avec les mains pour l'équilibre. Monte sur la pointe très lentement (compte 3 secondes), en poussant bien dans le gros orteil, puis redescends encore plus lentement (3-4 secondes), talon plus bas que le bloc. 3 séries de 8-10. Augmente la difficulté au fil des semaines : d'abord plus lent, puis avec un petit poids dans les mains quand c'est facile." },
+  machoire: { label: "Relâchement de la mâchoire (ATM)", how: "Assise ou allongée, mâchoire relâchée, lèvres fermées mais dents non serrées. Pose 2 doigts sur l'articulation (devant l'oreille droite). Ouvre très lentement la bouche, sans forcer, jamais jusqu'à la douleur. 5 à 8 fois. Puis langue collée au palais, mâchoire détendue, tiens 30 secondes.", vids: [["Guide auto-reset crânien & mâchoire", VID.machoire]] },
+  glidingMollet: { label: "Gliding — mollet (gastrocnémien & soléaire)", how: "Assise, cheville posée sur le genou opposé. Empaume ton mollet à deux mains et serre fermement. En gardant la pression, fais des allers-retours lents avec ta cheville (pointe tendue ↔ pied fléchi). Le muscle glisse sous tes mains. 8-10 fois, en remontant de la cheville vers le genou. Pense à le faire aussi genou plié (ça cible le soléaire, le muscle profond)." },
+  glidingTibialPost: { label: "Gliding — tibial postérieur (intérieur du tibia)", how: "C'est ta zone fibrosée. Assise, pose les pouces le long du bord interne du tibia (l'os de la jambe), juste derrière. Pression douce, et bouge le pied (intérieur ↔ extérieur) sous ta main. Remonte doucement de la cheville vers le genou. Vas-y progressivement, c'est sensible." },
+  glidingTibialAnt: { label: "Gliding — tibial antérieur (devant la jambe)", how: "Pose la paume sur le muscle juste à côté de l'os, sur le devant de la jambe. Garde la pression et monte/descends le pied : le muscle roule sous ta main. 8-10 fois." },
+  glidingFascia: { label: "Gliding — fascia plantaire (sous le pied)", how: "Une balle (ou une bouteille) sous le pied. Roule lentement du talon vers les orteils en appuyant, et bouge les orteils en même temps (griffe/relâche). 1-2 min par pied. Parfait le matin." },
+  cars: { label: "CARs cheville, genou, hanche", how: "Grands cercles lents et contrôlés à chaque articulation, au maximum de ton amplitude, sans bouger le reste du corps. Cheville : assise, jambe tendue, dessine le plus grand cercle possible avec le pied, 5 cercles chaque sens. Genou : assise, cuisse immobile, cercles avec le tibia, 5 chaque sens. Hanche : debout, monte un genou, ouvre sur le côté, tends en arrière, grand cercle, 5 chaque sens. Toujours sans douleur.", vids: [["CARs cheville", VID.carsCheville], ["CARs hanche", VID.carsHanche], ["Routine CARs complète", VID.carsComplet]] },
+  centre1: { label: "Réveil du centre profond (la bougie)", how: "Allongée, genoux pliés. Souffle lentement par la bouche comme pour éteindre une bougie au loin. À la fin du souffle, sens le bas-ventre se resserrer vers l'intérieur (le nombril rentre légèrement), sans pousser le ventre vers le haut ni durcir le 6-pack. Tiens ce léger serrage 5 secondes en continuant à respirer doucement. 5 à 8 fois." },
+  renfoArriere: { label: "Renfo arrière : pont fessier, dead bug, bird dog", how: "Pont fessier : allongée, genoux pliés, décolle le bassin en serrant les fessiers, 2x12. Dead bug : allongée, bras au plafond, genoux pliés en l'air, tends une jambe + le bras opposé vers le sol en gardant le dos plaqué, alterne, 2x8. Bird dog : à quatre pattes, tends un bras + la jambe opposée à l'horizontale sans creuser le dos, tiens 3s, alterne, 2x8." },
+  bear: { label: "Bear squat", how: "À quatre pattes, mains sous les épaules, genoux décollés de 2-3 cm. Garde le dos plat et recule doucement les fesses vers les talons, puis reviens. Lent et contrôlé.", vids: [["Animal Flow (dont bear)", VID.bearSquat]] },
+  yin1: { label: "Yin doux : chenille et papillon", how: "Chenille (flexion avant assise, dos arrondi) : toute la chaîne postérieure, du sacrum à la nuque. Papillon (plantes des pieds jointes, buste vers l'avant) : hanches et bas du dos. Tenir 2-3 minutes chaque posture, en respirant, sans forcer. C'est du travail fascial profond, pas de l'étirement musculaire.", vids: [["Yin ischio & mollets (30 min)", VID.yinIschio], ["Yin hanches & fessiers (20 min)", VID.yinHanches]] },
+  yin2: { label: "Yin : chenille et demi-papillon", how: "Chenille (flexion avant assise, dos arrondi) : du sacrum à la nuque. Demi-papillon (une jambe tendue devant, buste relâché) : ischio-jambiers et fascia dorsal. 2-3 min par posture, en respirant.", vids: [["Yin ischio & mollets (30 min)", VID.yinIschio], ["Yin hanches & fessiers (20 min)", VID.yinHanches]] },
+  yin3: { label: "Yin complet : chenille, papillon, torsion", how: "Chenille (chaîne postérieure), demi-papillon (ischio-jambiers), papillon (hanches, bas du dos), torsion allongée sur le dos (mobilise la colonne, détend le côlon). 2-3 min par posture, en respirant, sans forcer.", vids: [["Yin ischio & mollets (30 min)", VID.yinIschio], ["Yin hanches & fessiers (20 min)", VID.yinHanches]] }
+};
+
+const PROGRAM = [
+  {
+    week: 1,
+    theme: "Installer les bases",
+    focus: "Respiration, nombril, pied, gliding. On apprend les gestes, sans charge.",
+    morning: [
+      { id: "m-resp", freq: "6-8 cycles", ex: EX.resp },
+      { id: "m-nombril", freq: "5 min", ex: EX.nombril },
+      { id: "m-griffes", freq: "10-15x par pied", ex: EX.griffes },
+      { id: "m-tibial1", freq: "8-10x, surtout à gauche", ex: EX.tibial1 },
+      { id: "m-reveils", freq: "1x avant de marcher", ex: EX.reveils },
+      { id: "m-machoire", freq: "5-8x", ex: EX.machoire }
+    ],
+    extra: [
+      { id: "e-gliding-mollet", freq: "1x cette semaine", ex: EX.glidingMollet }
+    ],
+    evening: [
+      { id: "s-yin", freq: "15-20 min, 3x cette semaine", ex: EX.yin1 }
+    ],
+    watch: "Les crampes sous le pied au début sont normales : le muscle se rallume."
+  },
+  {
+    week: 2,
+    theme: "Ancrer la routine",
+    focus: "Même base, on tient la régularité. Le gliding devient un réflexe.",
+    morning: [
+      { id: "m-resp", freq: "6-8 cycles", ex: EX.resp },
+      { id: "m-nombril", freq: "5 min", ex: EX.nombril },
+      { id: "m-griffes", freq: "10-15x par pied", ex: EX.griffes },
+      { id: "m-tibial1", freq: "8-10x, surtout à gauche", ex: EX.tibial1 },
+      { id: "m-reveils", freq: "1x avant de marcher", ex: EX.reveils },
+      { id: "m-machoire", freq: "5-8x", ex: EX.machoire }
+    ],
+    extra: [
+      { id: "e-gliding-mollet", freq: "2-3x cette semaine", ex: EX.glidingMollet },
+      { id: "e-gliding-fascia", freq: "2-3x cette semaine", ex: EX.glidingFascia },
+      { id: "e-fibulaires", freq: "2x cette semaine", ex: EX.fibulaires },
+      { id: "e-babinski", freq: "matin et soir", ex: EX.babinski }
+    ],
+    evening: [
+      { id: "s-yin", freq: "20 min, 3x cette semaine", ex: EX.yin2 }
+    ],
+    watch: "Toujours pas de chien tête en bas ni d'étirement agressif du mollet."
+  },
+  {
+    week: 3,
+    theme: "Réactiver et renforcer",
+    focus: "On ajoute le centre profond et le réveil articulaire. Le pied progresse.",
+    morning: [
+      { id: "m-resp", freq: "6-8 cycles", ex: EX.resp },
+      { id: "m-nombril", freq: "5 min", ex: EX.nombril },
+      { id: "m-griffes", freq: "10-15x par pied", ex: EX.griffes },
+      { id: "m-tibial2", freq: "8-10x", ex: EX.tibial2 },
+      { id: "m-babinski", freq: "matin et soir", ex: EX.babinski },
+      { id: "m-machoire", freq: "5-8x", ex: EX.machoire }
+    ],
+    extra: [
+      { id: "e-gliding-mollet", freq: "3x cette semaine", ex: EX.glidingMollet },
+      { id: "e-gliding-tibialpost", freq: "3x cette semaine", ex: EX.glidingTibialPost },
+      { id: "e-gliding-tibialant", freq: "2x cette semaine", ex: EX.glidingTibialAnt },
+      { id: "e-gliding-fascia", freq: "3x cette semaine", ex: EX.glidingFascia },
+      { id: "e-fibulaires", freq: "2x cette semaine", ex: EX.fibulaires },
+      { id: "e-cars", freq: "1-2x en échauffement", ex: EX.cars },
+      { id: "e-centre1", freq: "2-3x cette semaine", ex: EX.centre1 }
+    ],
+    evening: [
+      { id: "s-yin", freq: "20-30 min, 3x cette semaine", ex: EX.yin3 }
+    ],
+    watch: "On évite encore tout impact, saut, ou montée de côte."
+  },
+  {
+    week: 4,
+    theme: "Charger progressivement",
+    focus: "Renfo lourd et lent pour le tendon. Tout le programme prend forme.",
+    morning: [
+      { id: "m-resp", freq: "6-8 cycles", ex: EX.resp },
+      { id: "m-nombril", freq: "5 min", ex: EX.nombril },
+      { id: "m-griffes", freq: "10-15x par pied", ex: EX.griffes },
+      { id: "m-tibial2", freq: "8-10x", ex: EX.tibial2 },
+      { id: "m-babinski", freq: "matin et soir", ex: EX.babinski },
+      { id: "m-machoire", freq: "5-8x", ex: EX.machoire }
+    ],
+    extra: [
+      { id: "e-gliding-mollet", freq: "3x cette semaine", ex: EX.glidingMollet },
+      { id: "e-gliding-tibialpost", freq: "3x cette semaine", ex: EX.glidingTibialPost },
+      { id: "e-gliding-tibialant", freq: "2x cette semaine", ex: EX.glidingTibialAnt },
+      { id: "e-gliding-fascia", freq: "3x cette semaine", ex: EX.glidingFascia },
+      { id: "e-cars", freq: "2x en échauffement", ex: EX.cars },
+      { id: "e-orteilbloc", freq: "2x cette semaine", ex: EX.orteilBloc },
+      { id: "e-renfo2", freq: "2x cette semaine", ex: EX.renfoArriere },
+      { id: "e-bear", freq: "1x cette semaine", ex: EX.bear }
+    ],
+    evening: [
+      { id: "s-yin", freq: "20-30 min, 3x cette semaine", ex: EX.yin3 }
+    ],
+    watch: "Augmente la difficulté seulement si c'est sans douleur. La lenteur fait le travail."
+  }
+];
+
+const DAYS = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"];
+const STORAGE_KEY = "programme-kine-sandrine-v1";
+let state = { checks: {}, currentWeek: 1, openDetails: {} };
+
+function allItemsForWeek(week) {
+  return [...week.morning, ...week.extra, ...week.evening];
+}
+
+function dayKey(weekNum, dayIdx, itemId) {
+  return `w${weekNum}-d${dayIdx}-${itemId}`;
+}
+
+function computeWeekStats(weekNum) {
+  const week = PROGRAM[weekNum - 1];
+  const items = allItemsForWeek(week);
+  const totalPossible = items.length * 7;
+  let done = 0;
+  for (let d = 0; d < 7; d++) {
+    for (const item of items) {
+      if (state.checks[dayKey(weekNum, d, item.id)]) done++;
+    }
+  }
+  return { done, totalPossible, pct: totalPossible ? Math.round((done / totalPossible) * 100) : 0 };
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state.checks = parsed.checks || {};
+      state.currentWeek = parsed.currentWeek || 1;
+    }
+  } catch (e) {
+    console.error("Lecture impossible", e);
+  }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ checks: state.checks, currentWeek: state.currentWeek }));
+  } catch (e) {
+    console.error("Sauvegarde impossible", e);
+  }
+}
+
+function playIcon() {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>';
+}
+function chevronIcon() {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+}
+function warnIcon() {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M12 9v4"></path><path d="M10.3 3.9 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"></path><path d="M12 17h.01"></path></svg>';
+}
+
+function renderWeekPills() {
+  let html = '<div class="weekgrid">';
+  for (const w of PROGRAM) {
+    const stats = computeWeekStats(w.week);
+    const active = w.week === state.currentWeek ? " active" : "";
+    html += `<button class="weekpill${active}" data-week="${w.week}"><div class="wk">S${w.week}</div><div class="pct">${stats.pct}%</div></button>`;
+  }
+  html += "</div>";
+  return html;
+}
+
+function renderVidLinks(vids) {
+  if (!vids || !vids.length) return "";
+  let html = '<div class="vidlinks">';
+  for (const [label, url] of vids) {
+    html += `<a class="vidlink" href="${url}" target="_blank" rel="noopener">${playIcon()}<span>${label}</span></a>`;
+  }
+  html += "</div>";
+  return html;
+}
+
+function renderItem(weekNum, dayIdx, item) {
+  const key = dayKey(weekNum, dayIdx, item.id);
+  const checked = !!state.checks[key];
+  const detailKey = `${weekNum}-${item.id}`;
+  const isOpen = !!state.openDetails[detailKey];
+  return `
+    <div class="item">
+      <div class="item-row">
+        <input type="checkbox" data-key="${key}" ${checked ? "checked" : ""}>
+        <div class="item-body">
+          <button class="item-toggle" data-detail="${detailKey}">
+            <span class="item-label${checked ? " done" : ""}">${item.ex.label}</span>
+            <span class="item-chevron${isOpen ? " open" : ""}">${chevronIcon()}</span>
+          </button>
+          <div class="item-freq">${item.freq}</div>
+          ${isOpen ? `<div class="item-detail">${item.ex.how}${renderVidLinks(item.ex.vids)}</div>` : ""}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderDayCard(weekNum, dayIdx, week) {
+  let rows = '<div class="sectionlabel">matin</div>';
+  for (const item of week.morning) rows += renderItem(weekNum, dayIdx, item);
+  if (week.extra.length) {
+    rows += '<div class="sectionlabel">renfo / mobilité</div>';
+    for (const item of week.extra) rows += renderItem(weekNum, dayIdx, item);
+  }
+  rows += '<div class="sectionlabel">soir</div>';
+  for (const item of week.evening) rows += renderItem(weekNum, dayIdx, item);
+
+  return `<div class="daycard"><div class="daylabel">${DAYS[dayIdx]}</div>${rows}</div>`;
+}
+
+function render() {
+  const week = PROGRAM[state.currentWeek - 1];
+  const stats = computeWeekStats(state.currentWeek);
+
+  let daysHtml = "";
+  for (let d = 0; d < 7; d++) {
+    daysHtml += renderDayCard(state.currentWeek, d, week);
+  }
+
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    ${renderWeekPills()}
+    <div class="weekhead">
+      <div class="weekhead-row">
+        <div>
+          <p class="weekhead-title">Semaine ${week.week} — ${week.theme}</p>
+          <p class="weekhead-focus">${week.focus}</p>
+        </div>
+        <p class="weekhead-pct">${stats.pct}%</p>
+      </div>
+      <div class="progressbar"><div class="progressbar-fill" style="width:${stats.pct}%"></div></div>
+    </div>
+    <div class="watchbox">
+      <span class="watchbox-icon">${warnIcon()}</span>
+      <p>${week.watch}</p>
+    </div>
+    <p class="hint">Touche le nom d'un exercice pour voir le détail</p>
+    <div>${daysHtml}</div>
+  `;
+
+  app.querySelectorAll(".weekpill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.currentWeek = parseInt(btn.dataset.week, 10);
+      saveState();
+      render();
+    });
+  });
+
+  app.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener("change", () => {
+      state.checks[cb.dataset.key] = cb.checked;
+      saveState();
+      render();
+    });
+  });
+
+  app.querySelectorAll('button[data-detail]').forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.detail;
+      state.openDetails[key] = !state.openDetails[key];
+      render();
+    });
+  });
+}
+
+loadState();
+render();
+</script>
+</body>
+</html>
